@@ -1,5 +1,6 @@
 import requests
 import json
+import os
 
 # import logging
 # try:
@@ -61,9 +62,7 @@ class Modo(object):
 	request_header = {"Authorization": None}
 
 	def __init__(self):
-		with open("api-creds.json", "r") as f:
-			self.sec_data = json.load(f)
-		self.request_header["Authorization"] = "MODO0 key={}".format(self.sec_data["Key"])
+		self.request_header["Authorization"] = "MODO0 key={}".format(os.environ.get('Key'))
 
 	def post(self, url, headers=dict(), data=dict()):
 		r = requests.post(self.api_url + url, headers=merge_dicts(self.request_header, headers), json=data).json()
@@ -406,5 +405,7 @@ if __name__ == '__main__':
 	src = ModoEscrow(v, account="Mark Test 2")
 	gift = ModoGenCard(v, None)
 	c = ModoCoin(api, user_id=mark.user_id, source=src, dest=gift)
+	print mark.user_id
+	print src.vault_id
 	print json.dumps(c.accounts, indent=4)
 	print c.new_card

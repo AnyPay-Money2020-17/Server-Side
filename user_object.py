@@ -1,4 +1,5 @@
-import json
+import os
+import time
 
 import boto3
 
@@ -9,10 +10,8 @@ class AnyPayAPI(object):
 	def __init__(self):
 		self.MAPI = Modo()
 		self.vault = ModoVualt(self.MAPI)
-		with open("creds", "r") as f:
-			data = json.load(f)
-			self.ACCESS_KEY = data['access_key_id']
-			self.SECRET_KEY = data['secret_access_key']
+		self.ACCESS_KEY = os.environ.get('access_key_id')
+		self.SECRET_KEY = os.environ.get('secret_access_key')
 		self.dynamodb = boto3.resource(
 			'dynamodb',
 			region_name="us-west-1",
@@ -20,6 +19,7 @@ class AnyPayAPI(object):
 			aws_secret_access_key=self.SECRET_KEY
 		)
 		self.person_table = self.dynamodb.Table("Users")
+		self.payment_table = self.dynamodb.Table("open_payments")
 
 	def make_user(self, first_name=None, last_name=None, phone=None, email=None):
 		user = ModoPerson(self.MAPI, phone=phone, email=email, lname=last_name, fname=first_name)
@@ -57,6 +57,14 @@ class AnyPayAPI(object):
 			ReturnValues="UPDATED_NEW"
 		)
 		return card.vault_id
+
+	def add_new_card(self, data):
+		self.payment_table.put_item(
+			Item={
+				'id': str(time.time()),
+				'data': data
+			}
+		)
 
 
 if __name__ == '__main__':
